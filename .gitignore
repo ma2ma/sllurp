@@ -50,4 +50,7 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+# pyenv local file
+.python-version
+# reader config file
 bin/*.xml
