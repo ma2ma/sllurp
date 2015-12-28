@@ -54,3 +54,5 @@ docs/_build/
 .python-version
 # reader config file
 bin/*.xml
+# tags file
+tags
