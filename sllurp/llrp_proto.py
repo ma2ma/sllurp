@@ -1563,8 +1563,10 @@ def encode_AccessSpecStopTrigger (par):
     msg_header = '!HH'
     msg_header_len = struct.calcsize(msg_header)
 
-    data = struct.pack('!B', int(par['AccessSpecStopTriggerType']))
-    data += struct.pack('!H', int(par['OperationCountValue']))
+    # data = struct.pack('!B', int(par['AccessSpecStopTriggerType']))
+    data = struct.pack('!B', 1)
+    # data += struct.pack('!H', int(par['OperationCountValue']))
+    data += struct.pack('!H', 5)
 
     data = struct.pack(msg_header, msgtype,
             len(data) + msg_header_len) + data

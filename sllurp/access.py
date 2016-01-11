@@ -40,7 +40,7 @@ def access (proto):
     if args.read_words:
         readSpecParam = {
             'OpSpecID': 0,
-            'MB': 3,
+            'MB': 1,
             'WordPtr': 0,
             'AccessPassword': 0,
             'WordCount': args.read_words
@@ -79,6 +79,7 @@ def tagReportCallback (llrpMsg):
     tags = llrpMsg.msgdict['RO_ACCESS_REPORT']['TagReportData']
     if len(tags):
         logger.info('saw tag(s): %s', pprint.pformat(tags))
+        # pass
     else:
         logger.info('no tags seen')
         return
