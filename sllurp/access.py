@@ -1,16 +1,18 @@
 from __future__ import print_function
 import argparse
 import logging
-import pprint
+# import pprint
 import time
 from twisted.internet import reactor, defer
 
 import sllurp.llrp as llrp
-
+import pickle
+import os
 startTime = None
 endTime = None
 
 tagReport = 0
+taghash = {}
 logger = logging.getLogger('sllurp')
 
 args = None
@@ -26,12 +28,16 @@ def stopTimeMeasurement():
 def finish (_):
     global startTime
     global endTime
+    global taghash
 
     # stop runtime measurement to determine rates
     stopTimeMeasurement()
     runTime = (endTime - startTime) if (endTime > startTime) else 0
-
+    fw = open('tags.txt','wb')
+    pickle.dump(taghash,fw)
+    fw.close()
     logger.info('total # of tags seen: %d (%d tags/second)', tagReport, tagReport/runTime)
+    logger.info('record %d tags', len(taghash))
     if reactor.running:
         reactor.stop()
 
@@ -40,7 +46,7 @@ def access (proto):
     if args.read_words:
         readSpecParam = {
             'OpSpecID': 0,
-            'MB': 1,
+            'MB': 2,
             'WordPtr': 0,
             'AccessPassword': 0,
             'WordCount': args.read_words
@@ -76,14 +82,20 @@ def politeShutdown (factory):
 def tagReportCallback (llrpMsg):
     """Function to run each time the reader reports seeing tags."""
     global tagReport
+    global taghash
     tags = llrpMsg.msgdict['RO_ACCESS_REPORT']['TagReportData']
     if len(tags):
-        logger.info('saw tag(s): %s', pprint.pformat(tags))
-        # pass
+        # logger.info('saw tag(s): %s', pprint.pformat(tags))
+        pass
     else:
-        logger.info('no tags seen')
+        # logger.info('no tags seen')
         return
     for tag in tags:
+        if 'OpSpecResult' in tag.keys():
+            if ( not tag['EPC-96'] in taghash ) and (tag['OpSpecResult']['ReadData'].encode('hex') != ''):
+                taghash[tag['EPC-96']] = tag['OpSpecResult']['ReadData'].encode('hex')
+                logger.info('tid:%r,:epc:%r',tag['OpSpecResult']['ReadData'].encode('hex'),tag['EPC-96'])
+                # pass
         tagReport += tag['TagSeenCount'][0]
 
 def parse_args ():
@@ -138,10 +150,22 @@ def init_logging ():
 
     logger.log(logLevel, 'log level: %s', logging.getLevelName(logLevel))
 
+def read_hash():
+    global taghash
+    if not os.path.isfile('tags.txt'):
+        fw = open('tags.txt','wb')
+        pickle.dump({},fw)
+        fw.close()
+    f = open('tags.txt','rb')
+    taghash= pickle.load(f)
+    f.close()
+    print(taghash)
+
 def main ():
     parse_args()
     init_logging()
 
+    read_hash()
     # will be called when all connections have terminated normally
     onFinish = defer.Deferred()
     onFinish.addCallback(finish)
