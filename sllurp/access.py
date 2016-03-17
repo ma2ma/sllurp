@@ -12,7 +12,9 @@ startTime = None
 endTime = None
 
 tagReport = 0
+is_filter = True
 taghash = {}
+filterhash = {}
 logger = logging.getLogger('sllurp')
 
 args = None
@@ -83,6 +85,8 @@ def tagReportCallback (llrpMsg):
     """Function to run each time the reader reports seeing tags."""
     global tagReport
     global taghash
+    global filterhash
+    global is_filter
     tags = llrpMsg.msgdict['RO_ACCESS_REPORT']['TagReportData']
     if len(tags):
         # logger.info('saw tag(s): %s', pprint.pformat(tags))
@@ -92,10 +96,13 @@ def tagReportCallback (llrpMsg):
         return
     for tag in tags:
         if 'OpSpecResult' in tag.keys():
-            if ( not tag['EPC-96'] in taghash ) and (tag['OpSpecResult']['ReadData'].encode('hex') != ''):
-                taghash[tag['EPC-96']] = tag['OpSpecResult']['ReadData'].encode('hex')
-                logger.info('tid:%r,:epc:%r',tag['OpSpecResult']['ReadData'].encode('hex'),tag['EPC-96'])
-                # pass
+            if ( not tag['EPC-96'] in taghash ) and ( (not is_filter) or tag['EPC-96'] in filterhash ) and (tag['OpSpecResult']['ReadData'].encode('hex') != ''):
+                if tag['EPC-96'] in filterhash:
+                    taghash[tag['EPC-96']] =[  tag['OpSpecResult']['ReadData'].encode('hex'),filterhash[tag['EPC-96']] ]
+                    logger.info('tid:%r,:epc:%r,name:%r',tag['OpSpecResult']['ReadData'].encode('hex'),tag['EPC-96'],filterhash[tag['EPC-96']])
+                else:
+                    taghash[tag['EPC-96']] =[  tag['OpSpecResult']['ReadData'].encode('hex'),"" ]
+                    logger.info('tid:%r,:epc:%r,name:%r',tag['OpSpecResult']['ReadData'].encode('hex'),tag['EPC-96'],"")
         tagReport += tag['TagSeenCount'][0]
 
 def parse_args ():
@@ -121,6 +128,8 @@ def parse_args ():
             help='Gen2 session (default 2)')
     parser.add_argument('-P', '--tag-population', default=4, type=int,
             dest='population', help="Tag Population value (default 4)")
+    parser.add_argument('-f', '--filter-epc', default=1, type=int,
+            help="1 is filter epc (default 1)")
 
     # read or write
     op = parser.add_mutually_exclusive_group(required=True)
@@ -152,19 +161,35 @@ def init_logging ():
 
 def read_hash():
     global taghash
+    global filterhash
     if not os.path.isfile('tags.txt'):
         fw = open('tags.txt','wb')
         pickle.dump({},fw)
         fw.close()
+    if not os.path.isfile('filter.txt'):
+        fw = open('filter.txt','wb')
+        fw.write("")
+        fw.close()
     f = open('tags.txt','rb')
+    f1 = open('filter.txt','rb')
     taghash= pickle.load(f)
     f.close()
+    for line in f1.readlines():
+        if line.strip() != "":
+            f = line.strip().split(",",2)
+            # print(f)
+            filterhash[f[0]] =f[1]
     print(taghash)
+    print("-----------------------------")
+    print(filterhash)
 
 def main ():
+    global is_filter
     parse_args()
     init_logging()
-
+    if args.filter_epc != 1:
+        is_filter = False
+    # print(args.filter_epc)
     read_hash()
     # will be called when all connections have terminated normally
     onFinish = defer.Deferred()
