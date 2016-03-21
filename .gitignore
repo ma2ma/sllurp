@@ -55,5 +55,6 @@ docs/_build/
 # reader config file
 bin/*.xml
 bin/*.txt
+bin/*.csv
 # tags file
 tags
