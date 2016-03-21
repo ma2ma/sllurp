@@ -96,10 +96,11 @@ def tagReportCallback (llrpMsg):
         return
     for tag in tags:
         if 'OpSpecResult' in tag.keys():
-            if ( not tag['EPC-96'] in taghash ) and ( (not is_filter) or tag['EPC-96'] in filterhash ) and (tag['OpSpecResult']['ReadData'].encode('hex') != ''):
-                if tag['EPC-96'] in filterhash:
-                    taghash[tag['EPC-96']] =[  tag['OpSpecResult']['ReadData'].encode('hex'),filterhash[tag['EPC-96']] ]
-                    logger.info('tid:%r,:epc:%r,name:%r',tag['OpSpecResult']['ReadData'].encode('hex'),tag['EPC-96'],filterhash[tag['EPC-96']])
+            epc_96=tag['EPC-96'][8:]
+            if ( not tag['EPC-96'] in taghash ) and ( (not is_filter) or epc_96 in filterhash ) and (tag['OpSpecResult']['ReadData'].encode('hex') != ''):
+                if epc_96 in filterhash:
+                    taghash[tag['EPC-96']] =[  tag['OpSpecResult']['ReadData'].encode('hex'),filterhash[epc_96] ]
+                    logger.info('tid:%r,:epc:%r,name:%r',tag['OpSpecResult']['ReadData'].encode('hex'),tag['EPC-96'],filterhash[epc_96])
                 else:
                     taghash[tag['EPC-96']] =[  tag['OpSpecResult']['ReadData'].encode('hex'),"" ]
                     logger.info('tid:%r,:epc:%r,name:%r',tag['OpSpecResult']['ReadData'].encode('hex'),tag['EPC-96'],"")
@@ -176,12 +177,12 @@ def read_hash():
     f.close()
     for line in f1.readlines():
         if line.strip() != "":
-            f = line.strip().split(",",2)
+            f = line.strip().split(",",1)
             # print(f)
             filterhash[f[0]] =f[1]
     print(taghash)
     print("-----------------------------")
-    print(filterhash)
+    # print(filterhash)
 
 def main ():
     global is_filter
