@@ -35,11 +35,11 @@ def finish (_):
     # stop runtime measurement to determine rates
     stopTimeMeasurement()
     runTime = (endTime - startTime) if (endTime > startTime) else 0
-    fw = open('tags.txt','wb')
-    pickle.dump(taghash,fw)
-    fw.close()
+    # fw = open('tags.txt','wb')
+    # pickle.dump(taghash,fw)
+    # fw.close()
     logger.info('total # of tags seen: %d (%d tags/second)', tagReport, tagReport/runTime)
-    logger.info('record %d tags', len(taghash))
+    # logger.info('record %d tags', len(taghash))
     if reactor.running:
         reactor.stop()
 
@@ -79,6 +79,13 @@ def access (proto):
             writeWords=writeSpecParam)
 
 def politeShutdown (factory):
+    global taghash
+    fw = open('tags.txt','wb')
+    pickle.dump(taghash,fw)
+    fw.close()
+    # logger.info('total # of tags seen: %d (%d tags/second)', tagReport, tagReport/runTime)
+    logger.info('record %d tags', len(taghash))
+
     return factory.politeShutdown()
 
 def tagReportCallback (llrpMsg):
