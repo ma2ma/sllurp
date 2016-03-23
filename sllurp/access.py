@@ -4,7 +4,7 @@ import logging
 # import pprint
 import time
 from twisted.internet import reactor, defer
-
+import signal
 import sllurp.llrp as llrp
 import pickle
 import os
@@ -35,11 +35,11 @@ def finish (_):
     # stop runtime measurement to determine rates
     stopTimeMeasurement()
     runTime = (endTime - startTime) if (endTime > startTime) else 0
-    # fw = open('tags.txt','wb')
-    # pickle.dump(taghash,fw)
-    # fw.close()
+    fw = open('tags.txt','wb')
+    pickle.dump(taghash,fw)
+    fw.close()
     logger.info('total # of tags seen: %d (%d tags/second)', tagReport, tagReport/runTime)
-    # logger.info('record %d tags', len(taghash))
+    logger.info('record %d tags', len(taghash))
     if reactor.running:
         reactor.stop()
 
@@ -79,13 +79,6 @@ def access (proto):
             writeWords=writeSpecParam)
 
 def politeShutdown (factory):
-    global taghash
-    fw = open('tags.txt','wb')
-    pickle.dump(taghash,fw)
-    fw.close()
-    # logger.info('total # of tags seen: %d (%d tags/second)', tagReport, tagReport/runTime)
-    logger.info('record %d tags', len(taghash))
-
     return factory.politeShutdown()
 
 def tagReportCallback (llrpMsg):
@@ -190,7 +183,15 @@ def read_hash():
     print(taghash)
     print("-----------------------------")
     # print(filterhash)
-
+def handler(signum, frame):
+    global taghash
+    fw = open('tags.txt','wb')
+    pickle.dump(taghash,fw)
+    fw.close()
+    # logger.info('total # of tags seen: %d (%d tags/second)', tagReport, tagReport/runTime)
+    logger.info('record %d tags', len(taghash))
+    logger.info("aaa")
+    # os.kill(os.getpid(), signal.alarm(1))
 def main ():
     global is_filter
     parse_args()
@@ -238,6 +239,7 @@ def main ():
     # catch ctrl-C and stop inventory before disconnecting
     reactor.addSystemEventTrigger('before', 'shutdown', politeShutdown, fac)
 
+    signal.signal(signal.SIGTSTP, handler)
     # start runtime measurement to determine rates
     startTimeMeasurement()
 
