@@ -100,7 +100,7 @@ def tagReportCallback (llrpMsg):
             if ( not tag['EPC-96'] in taghash ) and ( (not is_filter) or epc_96 in filterhash ) and (tag['OpSpecResult']['ReadData'].encode('hex') != ''):
                 if epc_96 in filterhash:
                     taghash[tag['EPC-96']] =[  tag['OpSpecResult']['ReadData'].encode('hex'),filterhash[epc_96] ]
-                    logger.info('tid:%r,:epc:%r,name:%r',tag['OpSpecResult']['ReadData'].encode('hex'),tag['EPC-96'],filterhash[epc_96])
+                    logger.info('tid:%r,:epc:%r,name:%s',tag['OpSpecResult']['ReadData'].encode('hex'),tag['EPC-96'],filterhash[epc_96])
                 else:
                     taghash[tag['EPC-96']] =[  tag['OpSpecResult']['ReadData'].encode('hex'),"" ]
                     logger.info('tid:%r,:epc:%r,name:%r',tag['OpSpecResult']['ReadData'].encode('hex'),tag['EPC-96'],"")
