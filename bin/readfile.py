@@ -1,4 +1,3 @@
-
 import pickle
 def main():
     f = open('tags.txt','rb')
